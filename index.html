@@ -42,7 +42,7 @@
 
 <script>
   // CONFIGURA ESTO:
-  const CONTRASENAS_MAESTRAS = ['gaT_bsZ2PblA', 'Rb!RlAryrUEn', 'xh(4KeeIna8I', 'QaQNmActyMLA', ''];
+  const CONTRASENAS_MAESTRAS = ['gaT_bsZ2PblA', 'Rb!RlAryrUEn', 'xh(4KeeIna8I', 'QaQNmActyMLA', 'AYG-AYUDANTE8273'];
   const WEBHOOK_URL = 'https://discord.com/api/webhooks/1339641639672741928/odXGMXa6wkkDk3ptjMl4176NOL7rM0zFO1hyCJIxsk3f6mCFflDsld8r3i9AMAhC2019';
 
   const btnIngresar = document.getElementById('btnIngresar');
@@ -60,7 +60,7 @@
   let intervalo = null;
   let pausado = false;
 
-  // Función actualizada para mostrar horas sin límite y sin ceros a la izquierda
+  // Función para formatear tiempo, horas sin límite ni ceros a la izquierda
   function tiempoFormateado(s) {
     const hrs = Math.floor(s / 3600);
     const min = Math.floor((s % 3600) / 60).toString().padStart(2, '0');
@@ -127,7 +127,6 @@
     btnPausar.disabled = true;
     btnTerminar.disabled = true;
 
-    // Guardar datos para enviar luego
     btnTerminar.datosUsuario = datos;
   };
 
@@ -161,7 +160,6 @@
 
     alert(`Turno terminado.\nTiempo trabajado: ${tiempo}`);
 
-    // Resetear
     formulario.style.display = 'block';
     datosPersonales.style.display = 'none';
     document.getElementById('nombre').value = '';
