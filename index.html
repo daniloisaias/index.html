@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>SAMU - Ingreso y Turno</title> 
-<link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SAMU - Ingreso y Turno</title> 
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
 <h2>Ingreso de Datos SAMU</h2>
-  
+
 <div id="formulario">
   <label for="nombre">Nombre:</label><br/>
   <input type="text" id="nombre" placeholder="Tu nombre" /><br/>
@@ -41,7 +41,6 @@
 </div>
 
 <script>
-  // CONFIGURA ESTO:
   const CONTRASENAS_MAESTRAS = ['gaT_bsZ2PblA', 'Rb!RlAryrUEn', 'xh(4KeeIna8I', 'QaQNmActyMLA', 'AYG-AYUDANTE8273', 'SUP-9324-Joaquin'];
   const WEBHOOK_URL = 'https://discord.com/api/webhooks/1339641639672741928/odXGMXa6wkkDk3ptjMl4176NOL7rM0zFO1hyCJIxsk3f6mCFflDsld8r3i9AMAhC2019';
 
@@ -56,11 +55,12 @@
   const btnTerminar = document.getElementById('btnTerminar');
   const timerDisplay = document.getElementById('timer');
 
-  let segundos = 0;
+  let inicio = null;
+  let pausaInicio = null;
+  let totalPausado = 0;
   let intervalo = null;
-  let pausado = false;
+  let enPausa = false;
 
-  // Función para formatear tiempo, horas sin límite ni ceros a la izquierda
   function tiempoFormateado(s) {
     const hrs = Math.floor(s / 3600);
     const min = Math.floor((s % 3600) / 60).toString().padStart(2, '0');
@@ -69,10 +69,9 @@
   }
 
   function actualizarTimer() {
-    if (!pausado) {
-      segundos++;
-      timerDisplay.textContent = tiempoFormateado(segundos);
-    }
+    const ahora = Date.now();
+    const tiempoReal = Math.floor((ahora - inicio - totalPausado) / 1000);
+    timerDisplay.textContent = tiempoFormateado(tiempoReal);
   }
 
   function mostrarDatos(datos) {
@@ -119,9 +118,11 @@
     formulario.style.display = 'none';
     datosPersonales.style.display = 'block';
 
-    segundos = 0;
+    inicio = null;
+    pausaInicio = null;
+    totalPausado = 0;
+    enPausa = false;
     timerDisplay.textContent = '0:00:00';
-    pausado = false;
 
     btnIniciar.disabled = false;
     btnPausar.disabled = true;
@@ -131,9 +132,17 @@
   };
 
   btnIniciar.onclick = () => {
-    if (intervalo) clearInterval(intervalo);
-    pausado = false;
+    if (!inicio) {
+      inicio = Date.now();
+    }
+
+    if (pausaInicio) {
+      totalPausado += Date.now() - pausaInicio;
+      pausaInicio = null;
+    }
+
     intervalo = setInterval(actualizarTimer, 1000);
+    enPausa = false;
 
     btnIniciar.disabled = true;
     btnPausar.disabled = false;
@@ -141,24 +150,32 @@
   };
 
   btnPausar.onclick = () => {
-    pausado = true;
-    btnIniciar.disabled = false;
-    btnPausar.disabled = true;
+    if (!enPausa) {
+      clearInterval(intervalo);
+      pausaInicio = Date.now();
+      enPausa = true;
+
+      btnIniciar.disabled = false;
+      btnPausar.disabled = true;
+    }
   };
 
   btnTerminar.onclick = () => {
     if (intervalo) clearInterval(intervalo);
 
-    btnIniciar.disabled = true;
-    btnPausar.disabled = true;
-    btnTerminar.disabled = true;
+    const ahora = Date.now();
+    const tiempoFinal = Math.floor((ahora - inicio - totalPausado) / 1000);
+    const tiempo = tiempoFormateado(tiempoFinal);
 
     const datos = btnTerminar.datosUsuario;
-    const tiempo = tiempoFormateado(segundos);
-
     enviarWebhook(datos, tiempo);
 
     alert(`Turno terminado.\nTiempo trabajado: ${tiempo}`);
+
+    inicio = null;
+    pausaInicio = null;
+    totalPausado = 0;
+    enPausa = false;
 
     formulario.style.display = 'block';
     datosPersonales.style.display = 'none';
@@ -173,4 +190,3 @@
 
 </body>
 </html>
-
