@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SAMU - Turno Rápido</title>
   <link rel="stylesheet" href="styles.css" />
-  <style>
 </head>
 <body>
 
@@ -27,7 +26,16 @@
 </div>
 
 <script>
-  const CONTRASENAS = ['gaT_bsZ2PblA', 'Rb!RlAryrUEn', 'xh(4KeeIna8I', 'QaQNmActyMLA', 'AYG-AYUDANTE8273', 'SUP-9324-Joaquin', 'DG-01-Director General de Samu'];
+  const CONTRASENAS = [
+    'gaT_bsZ2PblA',
+    'Rb!RlAryrUEn',
+    'xh(4KeeIna8I',
+    'QaQNmActyMLA',
+    'AYG-AYUDANTE8273',
+    'SUP-9324-Joaquin',
+    'DG-01-Director General de Samu'
+  ];
+
   const WEBHOOK = 'https://discord.com/api/webhooks/1339641639672741928/odXGMXa6wkkDk3ptjMl4176NOL7rM0zFO1hyCJIxsk3f6mCFflDsld8r3i9AMAhC2019';
 
   let segundos = 0, intervalo, datos = {};
@@ -46,8 +54,15 @@
     const contrasena = document.getElementById("contrasena").value.trim();
     const error = document.getElementById("error");
 
-    if (!nombre || !apellido || !placa || !contrasena) return error.textContent = "Completa todos los campos.";
-    if (!CONTRASENAS.includes(contrasena)) return error.textContent = "Contraseña incorrecta.";
+    if (!nombre || !apellido || !placa || !contrasena) {
+      error.textContent = "Completa todos los campos.";
+      return;
+    }
+
+    if (!CONTRASENAS.includes(contrasena)) {
+      error.textContent = "Contraseña incorrecta.";
+      return;
+    }
 
     datos = { nombre, apellido, placa };
     document.getElementById("formulario").style.display = "none";
@@ -79,3 +94,4 @@
 
 </body>
 </html>
+
