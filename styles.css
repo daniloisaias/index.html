@@ -8,9 +8,11 @@ body {
 
 h2 {
   margin-bottom: 20px;
+  font-size: 28px;
+  color: #00ffe7;
 }
 
-#formulario, #datosPersonales {
+#formulario, #turno {
   background-color: #10183a;
   padding: 20px;
   border-radius: 10px;
@@ -28,7 +30,7 @@ label {
 input {
   width: 90%;
   padding: 10px;
-  margin-top: 5px;
+  margin-top: 10px;
   border: none;
   border-radius: 5px;
   font-size: 16px;
@@ -50,23 +52,17 @@ button {
   border: 2px solid #00ffe7;
   border-radius: 10px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+button:hover {
+  background-color: #00ffe7;
+  color: #0a0f25;
 }
 
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-button:hover:not(:disabled) {
-  background-color: #00ffe7;
-  color: #0a0f25;
-}
-
-#mensaje {
-  margin-top: 15px;
-  font-weight: bold;
-  color: #ff5555;
 }
 
 #timer {
@@ -76,7 +72,10 @@ button:hover:not(:disabled) {
   letter-spacing: 3px;
 }
 
-#controles button {
-  margin: 10px 15px;
+#error {
+  margin-top: 15px;
+  font-weight: bold;
+  color: #ff5555;
 }
+
 
