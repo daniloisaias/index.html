@@ -3,101 +3,82 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SAMU - Ingreso y Turno</title>
+  <title>SAMU - Turno Rápido</title>
   <style>
-    body { font-family: sans-serif; text-align: center; background: #f0f0f0; padding: 20px; }
-    input, button { margin: 6px; padding: 8px; width: 200px; }
-    #datosPersonales { margin-top: 20px; }
-    #timer { font-size: 2em; margin-top: 10px; }
+    body { font-family: sans-serif; text-align: center; padding: 20px; background: #f9f9f9; }
+    input, button { padding: 8px; margin: 5px; width: 220px; }
+    #timer { font-size: 2em; margin: 10px 0; }
   </style>
 </head>
 <body>
 
-<h2>Ingreso de Datos SAMU</h2>
+<h2>Ingreso Rápido SAMU</h2>
 
 <div id="formulario">
-  <input type="text" id="nombre" placeholder="Nombre"><br>
-  <input type="text" id="apellido" placeholder="Apellido"><br>
-  <input type="text" id="placa" placeholder="Placa"><br>
+  <input id="nombre" placeholder="Nombre"><br>
+  <input id="apellido" placeholder="Apellido"><br>
+  <input id="placa" placeholder="Placa"><br>
   <input type="password" id="contrasena" placeholder="Contraseña"><br>
-  <button id="btnIngresar">Ingresar y Guardar</button>
-  <p id="mensaje" style="color:red;"></p>
+  <button onclick="ingresar()">Ingresar</button>
+  <p id="error" style="color:red;"></p>
 </div>
 
-<div id="datosPersonales" style="display:none;">
-  <h2>Datos Guardados</h2>
-  <div id="infoDatos"></div>
+<div id="turno" style="display:none;">
+  <div id="info"></div>
   <div id="timer">0:00:00</div>
-  <div>
-    <button id="btnIniciar">Iniciar</button>
-    <button id="btnPausar" disabled>Pausar</button>
-    <button id="btnTerminar" disabled>Terminar</button>
-  </div>
+  <button onclick="terminar()">Terminar Turno</button>
 </div>
 
 <script>
   const CONTRASENAS = ['gaT_bsZ2PblA', 'Rb!RlAryrUEn', 'xh(4KeeIna8I', 'QaQNmActyMLA', 'AYG-AYUDANTE8273', 'SUP-9324-Joaquin'];
   const WEBHOOK = 'https://discord.com/api/webhooks/1339641639672741928/odXGMXa6wkkDk3ptjMl4176NOL7rM0zFO1hyCJIxsk3f6mCFflDsld8r3i9AMAhC2019';
 
-  let segundos = 0, intervalo = null, pausado = false, datosGuardados = {};
+  let segundos = 0, intervalo, datos = {};
 
-  const $ = id => document.getElementById(id);
-  const tiempoFormateado = s => `${Math.floor(s/3600)}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+  function format(s) {
+    let h = Math.floor(s / 3600);
+    let m = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+    let sec = String(s % 60).padStart(2, '0');
+    return `${h}:${m}:${sec}`;
+  }
 
-  $('btnIngresar').onclick = () => {
-    const nombre = $('nombre').value.trim();
-    const apellido = $('apellido').value.trim();
-    const placa = $('placa').value.trim();
-    const contrasena = $('contrasena').value.trim();
+  function ingresar() {
+    const nombre = document.getElementById("nombre").value.trim();
+    const apellido = document.getElementById("apellido").value.trim();
+    const placa = document.getElementById("placa").value.trim();
+    const contrasena = document.getElementById("contrasena").value.trim();
+    const error = document.getElementById("error");
 
-    if (!nombre || !apellido || !placa || !contrasena) return $('mensaje').textContent = 'Completa todos los campos.';
-    if (!CONTRASENAS.includes(contrasena)) return $('mensaje').textContent = 'Contraseña incorrecta.';
+    if (!nombre || !apellido || !placa || !contrasena) return error.textContent = "Completa todos los campos.";
+    if (!CONTRASENAS.includes(contrasena)) return error.textContent = "Contraseña incorrecta.";
 
-    datosGuardados = { nombre, apellido, placa };
-    $('infoDatos').innerHTML = `<b>Nombre:</b> ${nombre}<br><b>Apellido:</b> ${apellido}<br><b>Placa:</b> ${placa}`;
-    $('formulario').style.display = 'none';
-    $('datosPersonales').style.display = 'block';
-    $('mensaje').textContent = '';
-    $('timer').textContent = '0:00:00';
-    $('btnIniciar').disabled = false;
-    $('btnPausar').disabled = true;
-    $('btnTerminar').disabled = true;
+    datos = { nombre, apellido, placa };
+    document.getElementById("formulario").style.display = "none";
+    document.getElementById("turno").style.display = "block";
+    document.getElementById("info").innerHTML = `<b>${nombre} ${apellido}</b><br>Placa: ${placa}`;
+    error.textContent = "";
+
     segundos = 0;
-  };
-
-  $('btnIniciar').onclick = () => {
-    clearInterval(intervalo);
     intervalo = setInterval(() => {
-      if (!pausado) $('timer').textContent = tiempoFormateado(++segundos);
+      segundos++;
+      document.getElementById("timer").textContent = format(segundos);
     }, 1000);
-    pausado = false;
-    $('btnIniciar').disabled = true;
-    $('btnPausar').disabled = false;
-    $('btnTerminar').disabled = false;
-  };
+  }
 
-  $('btnPausar').onclick = () => {
-    pausado = true;
-    $('btnIniciar').disabled = false;
-    $('btnPausar').disabled = true;
-  };
-
-  $('btnTerminar').onclick = () => {
+  function terminar() {
     clearInterval(intervalo);
-    const tiempo = tiempoFormateado(segundos);
+    const tiempo = format(segundos);
     fetch(WEBHOOK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        content: `**Turno terminado**\nNombre: ${datosGuardados.nombre}\nApellido: ${datosGuardados.apellido}\nPlaca: ${datosGuardados.placa}\nTiempo trabajado: ${tiempo}`
+        content: `🟢 **Turno Terminado**\n👤 ${datos.nombre} ${datos.apellido}\n🪪 Placa: ${datos.placa}\n⏱️ Tiempo trabajado: ${tiempo}`
       })
     });
-
-    alert(`Turno terminado\nTiempo: ${tiempo}`);
-    location.reload(); // Recarga para reiniciar rápido
-  };
+    alert(`Turno finalizado.\nTiempo: ${tiempo}`);
+    location.reload();
+  }
 </script>
 
 </body>
 </html>
-
