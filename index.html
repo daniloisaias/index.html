@@ -3,26 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SAMU - Ingreso y Turno</title> 
-  <link rel="stylesheet" href="styles.css" />
+  <title>SAMU - Ingreso y Turno</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; background: #f0f0f0; padding: 20px; }
+    input, button { margin: 6px; padding: 8px; width: 200px; }
+    #datosPersonales { margin-top: 20px; }
+    #timer { font-size: 2em; margin-top: 10px; }
+  </style>
 </head>
 <body>
 
 <h2>Ingreso de Datos SAMU</h2>
 
 <div id="formulario">
-  <label for="nombre">Nombre:</label><br/>
-  <input type="text" id="nombre" placeholder="Tu nombre" /><br/>
-
-  <label for="apellido">Apellido:</label><br/>
-  <input type="text" id="apellido" placeholder="Tu apellido" /><br/>
-
-  <label for="placa">Placa:</label><br/>
-  <input type="text" id="placa" placeholder="Número de placa" /><br/>
-
-  <label for="contrasena">Contraseña:</label><br/>
-  <input type="password" id="contrasena" placeholder="Contraseña maestra" /><br/>
-
+  <input type="text" id="nombre" placeholder="Nombre"><br>
+  <input type="text" id="apellido" placeholder="Apellido"><br>
+  <input type="text" id="placa" placeholder="Placa"><br>
+  <input type="password" id="contrasena" placeholder="Contraseña"><br>
   <button id="btnIngresar">Ingresar y Guardar</button>
   <p id="mensaje" style="color:red;"></p>
 </div>
@@ -30,10 +27,8 @@
 <div id="datosPersonales" style="display:none;">
   <h2>Datos Guardados</h2>
   <div id="infoDatos"></div>
-
   <div id="timer">0:00:00</div>
-
-  <div id="controles">
+  <div>
     <button id="btnIniciar">Iniciar</button>
     <button id="btnPausar" disabled>Pausar</button>
     <button id="btnTerminar" disabled>Terminar</button>
@@ -41,152 +36,68 @@
 </div>
 
 <script>
-  const CONTRASENAS_MAESTRAS = ['gaT_bsZ2PblA', 'Rb!RlAryrUEn', 'xh(4KeeIna8I', 'QaQNmActyMLA', 'AYG-AYUDANTE8273', 'SUP-9324-Joaquin'];
-  const WEBHOOK_URL = 'https://discord.com/api/webhooks/1339641639672741928/odXGMXa6wkkDk3ptjMl4176NOL7rM0zFO1hyCJIxsk3f6mCFflDsld8r3i9AMAhC2019';
+  const CONTRASENAS = ['gaT_bsZ2PblA', 'Rb!RlAryrUEn', 'xh(4KeeIna8I', 'QaQNmActyMLA', 'AYG-AYUDANTE8273', 'SUP-9324-Joaquin'];
+  const WEBHOOK = 'https://discord.com/api/webhooks/1339641639672741928/odXGMXa6wkkDk3ptjMl4176NOL7rM0zFO1hyCJIxsk3f6mCFflDsld8r3i9AMAhC2019';
 
-  const btnIngresar = document.getElementById('btnIngresar');
-  const mensaje = document.getElementById('mensaje');
-  const formulario = document.getElementById('formulario');
-  const datosPersonales = document.getElementById('datosPersonales');
-  const infoDatos = document.getElementById('infoDatos');
+  let segundos = 0, intervalo = null, pausado = false, datosGuardados = {};
 
-  const btnIniciar = document.getElementById('btnIniciar');
-  const btnPausar = document.getElementById('btnPausar');
-  const btnTerminar = document.getElementById('btnTerminar');
-  const timerDisplay = document.getElementById('timer');
+  const $ = id => document.getElementById(id);
+  const tiempoFormateado = s => `${Math.floor(s/3600)}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 
-  let inicio = null;
-  let pausaInicio = null;
-  let totalPausado = 0;
-  let intervalo = null;
-  let enPausa = false;
+  $('btnIngresar').onclick = () => {
+    const nombre = $('nombre').value.trim();
+    const apellido = $('apellido').value.trim();
+    const placa = $('placa').value.trim();
+    const contrasena = $('contrasena').value.trim();
 
-  function tiempoFormateado(s) {
-    const hrs = Math.floor(s / 3600);
-    const min = Math.floor((s % 3600) / 60).toString().padStart(2, '0');
-    const seg = (s % 60).toString().padStart(2, '0');
-    return `${hrs}:${min}:${seg}`;
-  }
+    if (!nombre || !apellido || !placa || !contrasena) return $('mensaje').textContent = 'Completa todos los campos.';
+    if (!CONTRASENAS.includes(contrasena)) return $('mensaje').textContent = 'Contraseña incorrecta.';
 
-  function actualizarTimer() {
-    const ahora = Date.now();
-    const tiempoReal = Math.floor((ahora - inicio - totalPausado) / 1000);
-    timerDisplay.textContent = tiempoFormateado(tiempoReal);
-  }
+    datosGuardados = { nombre, apellido, placa };
+    $('infoDatos').innerHTML = `<b>Nombre:</b> ${nombre}<br><b>Apellido:</b> ${apellido}<br><b>Placa:</b> ${placa}`;
+    $('formulario').style.display = 'none';
+    $('datosPersonales').style.display = 'block';
+    $('mensaje').textContent = '';
+    $('timer').textContent = '0:00:00';
+    $('btnIniciar').disabled = false;
+    $('btnPausar').disabled = true;
+    $('btnTerminar').disabled = true;
+    segundos = 0;
+  };
 
-  function mostrarDatos(datos) {
-    infoDatos.innerHTML = `
-      <strong>Nombre:</strong> ${datos.nombre}<br/>
-      <strong>Apellido:</strong> ${datos.apellido}<br/>
-      <strong>Placa:</strong> ${datos.placa}<br/>
-      <strong>Contraseña:</strong> ${'*'.repeat(datos.contrasena.length)}
-    `;
-  }
+  $('btnIniciar').onclick = () => {
+    clearInterval(intervalo);
+    intervalo = setInterval(() => {
+      if (!pausado) $('timer').textContent = tiempoFormateado(++segundos);
+    }, 1000);
+    pausado = false;
+    $('btnIniciar').disabled = true;
+    $('btnPausar').disabled = false;
+    $('btnTerminar').disabled = false;
+  };
 
-  function enviarWebhook(datos, tiempo) {
-    if (!WEBHOOK_URL || WEBHOOK_URL.includes('tu_webhook')) return;
+  $('btnPausar').onclick = () => {
+    pausado = true;
+    $('btnIniciar').disabled = false;
+    $('btnPausar').disabled = true;
+  };
 
-    fetch(WEBHOOK_URL, {
+  $('btnTerminar').onclick = () => {
+    clearInterval(intervalo);
+    const tiempo = tiempoFormateado(segundos);
+    fetch(WEBHOOK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        content: `**Turno terminado**\nNombre: ${datos.nombre}\nApellido: ${datos.apellido}\nPlaca: ${datos.placa}\nTiempo trabajado: ${tiempo}`
+        content: `**Turno terminado**\nNombre: ${datosGuardados.nombre}\nApellido: ${datosGuardados.apellido}\nPlaca: ${datosGuardados.placa}\nTiempo trabajado: ${tiempo}`
       })
     });
-  }
 
-  btnIngresar.onclick = () => {
-    const nombre = document.getElementById('nombre').value.trim();
-    const apellido = document.getElementById('apellido').value.trim();
-    const placa = document.getElementById('placa').value.trim();
-    const contrasena = document.getElementById('contrasena').value.trim();
-
-    if (!nombre || !apellido || !placa || !contrasena) {
-      mensaje.textContent = 'Por favor, completa todos los campos.';
-      return;
-    }
-
-    if (!CONTRASENAS_MAESTRAS.includes(contrasena)) {
-      mensaje.textContent = 'Contraseña incorrecta.';
-      return;
-    }
-
-    mensaje.textContent = '';
-    const datos = { nombre, apellido, placa, contrasena };
-
-    mostrarDatos(datos);
-    formulario.style.display = 'none';
-    datosPersonales.style.display = 'block';
-
-    inicio = null;
-    pausaInicio = null;
-    totalPausado = 0;
-    enPausa = false;
-    timerDisplay.textContent = '0:00:00';
-
-    btnIniciar.disabled = false;
-    btnPausar.disabled = true;
-    btnTerminar.disabled = true;
-
-    btnTerminar.datosUsuario = datos;
-  };
-
-  btnIniciar.onclick = () => {
-    if (!inicio) {
-      inicio = Date.now();
-    }
-
-    if (pausaInicio) {
-      totalPausado += Date.now() - pausaInicio;
-      pausaInicio = null;
-    }
-
-    intervalo = setInterval(actualizarTimer, 1000);
-    enPausa = false;
-
-    btnIniciar.disabled = true;
-    btnPausar.disabled = false;
-    btnTerminar.disabled = false;
-  };
-
-  btnPausar.onclick = () => {
-    if (!enPausa) {
-      clearInterval(intervalo);
-      pausaInicio = Date.now();
-      enPausa = true;
-
-      btnIniciar.disabled = false;
-      btnPausar.disabled = true;
-    }
-  };
-
-  btnTerminar.onclick = () => {
-    if (intervalo) clearInterval(intervalo);
-
-    const ahora = Date.now();
-    const tiempoFinal = Math.floor((ahora - inicio - totalPausado) / 1000);
-    const tiempo = tiempoFormateado(tiempoFinal);
-
-    const datos = btnTerminar.datosUsuario;
-    enviarWebhook(datos, tiempo);
-
-    alert(`Turno terminado.\nTiempo trabajado: ${tiempo}`);
-
-    inicio = null;
-    pausaInicio = null;
-    totalPausado = 0;
-    enPausa = false;
-
-    formulario.style.display = 'block';
-    datosPersonales.style.display = 'none';
-    document.getElementById('nombre').value = '';
-    document.getElementById('apellido').value = '';
-    document.getElementById('placa').value = '';
-    document.getElementById('contrasena').value = '';
-    mensaje.textContent = '';
-    timerDisplay.textContent = '0:00:00';
+    alert(`Turno terminado\nTiempo: ${tiempo}`);
+    location.reload(); // Recarga para reiniciar rápido
   };
 </script>
 
 </body>
 </html>
+
