@@ -16,29 +16,24 @@
   <input id="placa" placeholder="Placa"><br>
   <input type="password" id="contrasena" placeholder="Contraseña"><br>
   <button onclick="ingresar()">Ingresar</button>
-  <p id="error" style="color:red;"></p>
+  <p id="error"></p>
 </div>
 
 <div id="turno" style="display:none;">
   <div id="info"></div>
   <div id="timer">0:00:00</div>
-  <button onclick="terminar()">Terminar Turno</button>
+  <div id="controles">
+    <button onclick="pausar()" id="btnPausar">Pausar</button>
+    <button onclick="reanudar()" id="btnReanudar" disabled>Reanudar</button>
+    <button onclick="terminar()">Terminar Turno</button>
+  </div>
 </div>
 
 <script>
-  const CONTRASENAS = [
-    'gaT_bsZ2PblA',
-    'Rb!RlAryrUEn',
-    'xh(4KeeIna8I',
-    'QaQNmActyMLA',
-    'AYG-AYUDANTE8273',
-    'SUP-9324-Joaquin',
-    'DG-01-Director General de Samu'
-  ];
-
+  const CONTRASENAS = ['gaT_bsZ2PblA', 'Rb!RlAryrUEn', 'xh(4KeeIna8I', 'QaQNmActyMLA', 'AYG-AYUDANTE8273', 'SUP-9324-Joaquin', 'DG-01-Director General de Samu', 'Hola Prueba'];
   const WEBHOOK = 'https://discord.com/api/webhooks/1339641639672741928/odXGMXa6wkkDk3ptjMl4176NOL7rM0zFO1hyCJIxsk3f6mCFflDsld8r3i9AMAhC2019';
 
-  let segundos = 0, intervalo, datos = {};
+  let segundos = 0, intervalo, datos = {}, enPausa = false;
 
   function format(s) {
     let h = Math.floor(s / 3600);
@@ -54,15 +49,8 @@
     const contrasena = document.getElementById("contrasena").value.trim();
     const error = document.getElementById("error");
 
-    if (!nombre || !apellido || !placa || !contrasena) {
-      error.textContent = "Completa todos los campos.";
-      return;
-    }
-
-    if (!CONTRASENAS.includes(contrasena)) {
-      error.textContent = "Contraseña incorrecta.";
-      return;
-    }
+    if (!nombre || !apellido || !placa || !contrasena) return error.textContent = "Completa todos los campos.";
+    if (!CONTRASENAS.includes(contrasena)) return error.textContent = "Contraseña incorrecta.";
 
     datos = { nombre, apellido, placa };
     document.getElementById("formulario").style.display = "none";
@@ -70,11 +58,29 @@
     document.getElementById("info").innerHTML = `<b>${nombre} ${apellido}</b><br>Placa: ${placa}`;
     error.textContent = "";
 
-    segundos = 0;
+    iniciarContador();
+  }
+
+  function iniciarContador() {
     intervalo = setInterval(() => {
       segundos++;
       document.getElementById("timer").textContent = format(segundos);
     }, 1000);
+  }
+
+  function pausar() {
+    clearInterval(intervalo);
+    enPausa = true;
+    document.getElementById("btnPausar").disabled = true;
+    document.getElementById("btnReanudar").disabled = false;
+  }
+
+  function reanudar() {
+    if (!enPausa) return;
+    iniciarContador();
+    enPausa = false;
+    document.getElementById("btnPausar").disabled = false;
+    document.getElementById("btnReanudar").disabled = true;
   }
 
   function terminar() {
